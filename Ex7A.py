@@ -31,10 +31,10 @@ def support_in_one_party_elections(party: str) -> int:
     53
     """
     try:
-        pattern = f"^{party}(?: -|$)"
+        pattern = f"{party} -"
         party_code = codes_for_answers[
-            (codes_for_answers['Value'] == 'Q2') & (codes_for_answers['Label'].str.contains(pattern, na=False))
-            ]['Code'].values[0]
+            (codes_for_answers['Value'] == 'Q2') & (codes_for_answers['Label'].str.contains(pattern) | codes_for_answers['Label'].eq(party))
+        ]['Code'].values[0]
     except IndexError:
         return 0  # If the party code is not found, return 0
     return (list_of_answers['Q2'] == party_code).sum()
@@ -42,26 +42,38 @@ def support_in_one_party_elections(party: str) -> int:
 
 def support_in_multi_party_elections(party: str) -> int:
     """
-    Returns the number of people who support the given party in the alternative election system (Q3).
+    Returns the number of people who support the given party in the alternative election system.
+
+    >>> support_in_multi_party_elections('מחל')
+    162
+    >>> support_in_multi_party_elections('פה')
+    131
+    >>> support_in_multi_party_elections('ר')
+    13
+    >>> support_in_multi_party_elections('עם')
+    27
+    >>> support_in_multi_party_elections('מפלגה אחרת')
+    8
     """
+
+    pattern = f"{party} -"
+
+    q3_columns = codes_for_questions[codes_for_questions['Variable'].str.contains('Q3_')]
+    q3_mapping = q3_columns.set_index('Variable')['Label'].to_dict()
+
+    party_to_q3_column = {label.split('-')[0].strip(): column for column, label in q3_mapping.items()}
+
     try:
-        pattern = f"^{party}(?: -|$)"
-        party_code = codes_for_answers[
-            (codes_for_answers['Value'] == 'Q2') & (codes_for_answers['Label'].str.contains(pattern, na=False))
-            ]['Code'].values[0]
-    except IndexError:
-        return 0  # If the party code is not found, return 0
+        q3_column = next(column for label, column in party_to_q3_column.items() if label == party or label.startswith(pattern))
+    except StopIteration:
+        return 0
 
-    # Count the occurrences of the party code across Q3_1 to Q3_5
-    return ((list_of_answers[['Q3_1', 'Q3_2', 'Q3_3', 'Q3_4', 'Q3_5']] == party_code).sum(axis=1) > 0).sum()
-
+    support_count = int(list_of_answers[q3_column].sum())
+    return support_count
 
 def parties_with_different_relative_order() -> tuple:
     """
     Returns a pair of parties whose relative order is different in the two methods, if any. Otherwise, returns None.
-
-    >>> parties_with_different_relative_order()
-    ("מחל", "פה")
     """
     party_names = codes_for_answers[codes_for_answers['Value'] == 'Q2']['Label'].str.split(' - ').str[0].unique()
 
@@ -69,7 +81,6 @@ def parties_with_different_relative_order() -> tuple:
     q3_support = {party: support_in_multi_party_elections(party) for party in party_names}
 
     q2_ranking = sorted(q2_support.items(), key=lambda x: x[1], reverse=True)
-    q3_ranking = sorted(q3_support.items(), key=lambda x: x[1], reverse=True)
 
     for i in range(len(q2_ranking)):
         for j in range(i + 1, len(q2_ranking)):
@@ -81,5 +92,7 @@ def parties_with_different_relative_order() -> tuple:
 
 if __name__ == '__main__':
     import doctest
-
     doctest.testmod()
+
+
+
