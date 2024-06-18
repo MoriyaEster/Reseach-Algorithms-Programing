@@ -21,24 +21,14 @@ def net_support_for_candidate1(candidate1: str, candidate2: str) -> int:
     """
     Returns the net support for candidate1 over candidate2.
 
-    Net support is defined as the number of people who prefer candidate1 over candidate2
-    minus the number of people who prefer candidate2 over candidate1.
+     >>> net_support_for_candidate1("בני גנץ", "יאיר לפיד")
+     47
 
-    :param candidate1: Name of the first candidate
-    :param candidate2: Name of the second candidate
-    :return: Net support for candidate1 over candidate2
+     >>> net_support_for_candidate1("בנימין נתניהו", "יולי אדלשטיין")
+     11
 
-    >>> candidate1, candidate2 = "בני גנץ", "יאיר לפיד"
-    >>> net_support_for_candidate1(candidate1, candidate2)
-    47
-
-    >>> candidate1, candidate2 = "בנימין נתניהו", "יולי אדלשטיין"
-    >>> net_support_for_candidate1(candidate1, candidate2)
-    11
-
-    >>> candidate1, candidate2 = "ניר ברקת", "נפתלי בנט"
-    >>> net_support_for_candidate1(candidate1, candidate2)
-    -45
+     >>> net_support_for_candidate1("ניר ברקת", "נפתלי בנט")
+     -45
     """
     variable1 = get_candidate_variable(candidate1)
     variable2 = get_candidate_variable(candidate2)
@@ -62,7 +52,7 @@ def net_support_for_candidate1(candidate1: str, candidate2: str) -> int:
 
 def condorcet_winner() -> str:
     """
-    Finds the Condorcet winner if exists, otherwise returns 'none'.
+    Finds the Condorcet winner if exists, otherwise returns 'אין'.
     """
     cursor = db.cursor()
     cursor.execute("SELECT Label FROM codes_for_questions WHERE Variable LIKE 'Q6_%'")
